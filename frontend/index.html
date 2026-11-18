@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CivicEvents+ Platform</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        indigo: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Font Awesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Chart.js for Dashboard Visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="h-full flex flex-col text-slate-800 antialiased selection:bg-indigo-500 selection:text-white">
+
+    <!-- TOAST NOTIFICATION CONTAINER (Top-Right Floating) -->
+    <div id="toast-container" class="fixed top-5 right-5 z-50 flex flex-col items-end pointer-events-auto" aria-live="polite"></div>
+
+    <!-- ========================================================================= -->
+    <!-- GLOBAL APPLICATION HEADER & NAVIGATION                                    -->
+    <!-- ========================================================================= -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 gap-4">
+
+                <!-- Logo & Brand -->
+                <div class="flex items-center space-x-3">
+                    <a href="#/events" class="flex items-center space-x-2.5 group">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-indigo-800 flex items-center justify-center text-white shadow-md shadow-indigo-200 group-hover:scale-105 transition-transform">
+                            <i class="fas fa-landmark text-lg"></i>
+                        </div>
+                        <div>
+                            <span class="font-extrabold text-xl tracking-tight text-slate-900 group-hover:text-indigo-600 transition">CivicEvents<span class="text-indigo-600">+</span></span>
+                            <span class="hidden sm:block text-[10px] uppercase font-bold tracking-widest text-slate-400">Community Engagement</span>
+                        </div>
+                    </a>
+                </div>
+
+                <!-- Global Search Bar -->
+                <div class="hidden md:flex flex-1 max-w-md mx-4">
+                    <div class="relative w-full">
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                            <i class="fas fa-search text-sm"></i>
+                        </div>
+                        <input id="global-search-input" type="text" placeholder="Search events, workshops, announcements..." class="w-full pl-10 pr-4 py-2 bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-sm text-slate-900 rounded-xl border border-transparent focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 transition focus:outline-none" aria-label="Global Search">
+                    </div>
+                </div>
+
+                <!-- Desktop Navigation Links -->
+                <nav class="hidden lg:flex items-center space-x-1" aria-label="Main Navigation">
+                    <a href="#/events" class="nav-link px-3.5 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition">
+                        <i class="fas fa-calendar-alt mr-1.5 opacity-70"></i> Events
+                    </a>
+                    <a href="#/announcements" class="nav-link px-3.5 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition">
+                        <i class="fas fa-bullhorn mr-1.5 opacity-70"></i> Announcements
+                    </a>
+                    <a href="#/promos" class="nav-link px-3.5 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition">
+                        <i class="fas fa-play-circle mr-1.5 opacity-70"></i> Promos
+                    </a>
+
+                    <!-- Auth Only Navigation Link -->
+                    <a href="#/dashboard" class="nav-link auth-only hidden px-3.5 py-2 rounded-lg text-sm font-medium text-slate-600 hover:text-indigo-600 hover:bg-slate-50 transition">
+                        <i class="fas fa-chart-pie mr-1.5 opacity-70"></i> Dashboard
+                    </a>
+
+                    <!-- ROLE GUARD: Admin Only Navigation Link -->
+                    <a href="#/admin/users" class="nav-link admin-only hidden px-3.5 py-2 rounded-lg text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100 transition border border-purple-200">
+                        <i class="fas fa-users-cog mr-1.5"></i> Admin Users
+                    </a>
+                </nav>
+
+                <!-- Right Side Actions & Profile -->
+                <div class="flex items-center space-x-2.5">
+
+                    <!-- Notification Bell with Unread Count Badge -->
+                    <div class="auth-only hidden relative">
+                        <button id="notification-bell-btn" type="button" class="p-2.5 rounded-xl text-slate-600 hover:text-indigo-600 hover:bg-slate-100 transition relative focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-label="Open notifications drawer">
+                            <i class="far fa-bell text-lg"></i>
+                            <span id="notification-badge" class="hidden absolute top-1.5 right-1.5 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white bg-rose-600 rounded-full border-2 border-white shadow-xs">0</span>
+                        </button>
+                    </div>
+
+                    <!-- Guest Actions: Sign In & Create Account -->
+                    <div class="guest-only flex items-center space-x-2">
+                        <a href="#/login" class="px-3.5 py-2 rounded-xl text-sm font-medium text-slate-700 hover:text-indigo-600 hover:bg-slate-100 transition">
+                            Sign In
+                        </a>
+                        <a href="#/signup" class="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm shadow-indigo-200 transition">
+                            Create Account
+                        </a>
+                    </div>
+
+                    <!-- Authenticated User Dropdown -->
+                    <div class="auth-only hidden relative">
+                        <button id="user-menu-btn" type="button" class="flex items-center space-x-2.5 p-1.5 rounded-xl hover:bg-slate-100 transition focus:outline-none focus:ring-2 focus:ring-indigo-500" aria-expanded="false" aria-haspopup="true">
+                            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-800 text-white font-bold text-xs flex items-center justify-center shadow-xs">
+                                <span class="user-name-display text-xs">U</span>
+                            </div>
+                            <span class="hidden md:block text-sm font-semibold text-slate-800 user-name-display max-w-[120px] truncate">User</span>
+                            <i class="fas fa-chevron-down text-xs text-slate-400"></i>
+                        </button>
+
+                        <!-- Profile Dropdown Menu -->
+                        <div id="user-profile-menu" class="hidden absolute right-0 mt-2 w-64 rounded-2xl bg-white border border-slate-200/80 shadow-xl py-2 z-50 transition transform origin-top-right">
+                            <div class="px-4 py-3 border-b border-slate-100">
+                                <p class="text-xs text-slate-400 font-medium">Signed in as</p>
+                                <p class="text-sm font-bold text-slate-900 truncate user-name-display">User</p>
+                                <p class="text-xs text-slate-500 truncate user-email-display">user@example.com</p>
+                                <div class="mt-2">
+                                    <span class="user-role-badge inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-700">USER</span>
+                                </div>
+                            </div>
+
+                            <div class="py-1">
+                                <a href="#/dashboard" class="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition">
+                                    <i class="fas fa-chart-pie w-5 text-slate-400"></i> Dashboard
+                                </a>
+                                <a href="#/profile" class="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition">
+                                    <i class="fas fa-user-circle w-5 text-slate-400"></i> My Profile
+                                </a>
+                                <a href="#/registrations" class="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition">
+                                    <i class="fas fa-ticket-alt w-5 text-slate-400"></i> My Registrations
+                                </a>
+                                <a href="#/feedback" class="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition">
+                                    <i class="fas fa-star w-5 text-slate-400"></i> My Feedback
+                                </a>
+                                
+                                <!-- Admin Specific Menu Item -->
+                                <a href="#/admin/users" class="admin-only hidden flex items-center px-4 py-2 text-sm text-purple-700 hover:bg-purple-50 transition font-medium">
+                                    <i class="fas fa-users-cog w-5 text-purple-500"></i> User Management
+                                </a>
+
+                                <button id="settings-btn" type="button" class="w-full flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 hover:text-indigo-600 transition text-left">
+                                    <i class="fas fa-cog w-5 text-slate-400"></i> API Endpoint Settings
+                                </button>
+                            </div>
+
+                            <div class="border-t border-slate-100 pt-1">
+                                <button id="logout-btn" type="button" class="w-full flex items-center px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 transition font-medium text-left">
+                                    <i class="fas fa-sign-out-alt w-5"></i> Sign Out
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Hamburger Button -->
+                    <button id="mobile-menu-btn" type="button" class="lg:hidden p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition" aria-label="Toggle mobile menu">
+                        <i class="fas fa-bars text-lg"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation Menu Dropdown -->
+        <div id="mobile-nav-menu" class="hidden lg:hidden border-t border-slate-200 bg-white px-4 pt-3 pb-5 space-y-2">
+            <a href="#/events" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-50">
+                <i class="fas fa-calendar-alt w-6 text-slate-400"></i> Events
+            </a>
+            <a href="#/announcements" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-50">
+                <i class="fas fa-bullhorn w-6 text-slate-400"></i> Announcements
+            </a>
+            <a href="#/promos" class="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-50">
+                <i class="fas fa-play-circle w-6 text-slate-400"></i> Promos
+            </a>
+            <a href="#/dashboard" class="auth-only hidden block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-50">
+                <i class="fas fa-chart-pie w-6 text-slate-400"></i> Dashboard
+            </a>
+            <a href="#/admin/users" class="admin-only hidden block px-3 py-2 rounded-lg text-base font-medium text-purple-700 bg-purple-50">
+                <i class="fas fa-users-cog w-6 text-purple-500"></i> User Management
+            </a>
+            <div class="auth-only hidden pt-3 border-t border-slate-100">
+                <button id="mobile-logout-btn" type="button" class="w-full text-left px-3 py-2 text-base font-medium text-rose-600">
+                    <i class="fas fa-sign-out-alt w-6"></i> Sign Out
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ========================================================================= -->
+    <!-- SLIDE-OVER NOTIFICATION DRAWER                                            -->
+    <!-- ========================================================================= -->
+    <div id="notification-backdrop" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs transition-opacity" aria-hidden="true"></div>
+    <aside id="notification-drawer" class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-white shadow-2xl flex flex-col transform translate-x-full transition-transform duration-300 ease-in-out" aria-label="Notifications panel">
+        <div class="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center text-sm">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-900 text-base">Notifications</h3>
+                    <p class="text-xs text-slate-500">Civic alerts and updates</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-1">
+                <button id="notification-mark-all" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 px-2.5 py-1 rounded-md hover:bg-indigo-50 transition" title="Mark all as read">
+                    Mark all read
+                </button>
+                <button id="notification-drawer-close" class="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition" aria-label="Close notifications">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+        <div id="notification-list" class="flex-1 overflow-y-auto divide-y divide-slate-100">
+            <!-- Notifications rendered dynamically -->
+        </div>
+    </aside>
+
+    <!-- ========================================================================= -->
+    <!-- MAIN CONTENT VIEW CONTAINERS (SPA VIEWS)                                  -->
+    <!-- ========================================================================= -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- 1. VIEW: EVENTS LIST -->
+        <section id="view-events" class="app-view space-y-6">
+            <!-- Hero / Header Section -->
+            <div class="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 rounded-3xl p-8 sm:p-10 text-white shadow-xl relative overflow-hidden">
+                <div class="absolute -right-10 -bottom-10 w-64 h-64 rounded-full bg-white/5 pointer-events-none"></div>
+                <div class="max-w-2xl relative z-10">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/30 text-indigo-200 backdrop-blur-sm mb-4">
+                        <i class="fas fa-users mr-1.5"></i> Civic Participation Portal
+                    </span>
+                    <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight">Discover Community Civic Events</h1>
+                    <p class="mt-3 text-slate-300 text-sm sm:text-base leading-relaxed">
+                        Register for upcoming municipal forums, environmental workshops, public hearings, and civic leadership summits.
+                    </p>
+                    <div class="mt-6 flex flex-wrap gap-3">
+                        <!-- ROLE GUARD: Admin Only "Create Event" Action -->
+                        <button onclick="EventsModule.openCreateModal()" class="admin-only hidden px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-900/20 transition flex items-center">
+                            <i class="fas fa-plus-circle mr-2"></i> Create New Event
+                        </button>
+                        <a href="#/announcements" class="px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold rounded-xl backdrop-blur-sm transition flex items-center">
+                            <i class="fas fa-bullhorn mr-2"></i> Audio Announcements
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search, Filter & Controls Bar -->
+            <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
+                <div class="flex-1 relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                        <i class="fas fa-search text-xs"></i>
+                    </div>
+                    <input id="events-search-input" type="text" placeholder="Search events by title, description or location..." class="w-full pl-9 pr-4 py-2 bg-slate-50 focus:bg-white rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3">
+                    <select id="events-filter-location" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                        <option value="">All Locations</option>
+                    </select>
+
+                    <select id="events-filter-timing" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                        <option value="all">All Dates</option>
+                        <option value="upcoming" selected>Upcoming Only</option>
+                        <option value="past">Past Events</option>
+                    </select>
+
+                    <span id="events-count-badge" class="px-3 py-1.5 rounded-xl bg-slate-100 text-xs font-bold text-slate-600">
+                        Loading...
+                    </span>
+                </div>
+            </div>
+
+            <!-- Events Cards Grid -->
+            <div id="events-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Event cards rendered dynamically -->
+            </div>
+
+            <!-- Pagination -->
+            <div id="events-pagination"></div>
+        </section>
+
+        <!-- 2. VIEW: EVENT DETAIL -->
+        <section id="view-event-detail" class="app-view hidden space-y-6">
+            <div class="flex items-center justify-between">
+                <a href="#/events" class="inline-flex items-center text-sm font-semibold text-slate-600 hover:text-indigo-600 transition">
+                    <i class="fas fa-arrow-left mr-2"></i> Back to Events
+                </a>
+
+                <!-- ROLE GUARD: Admin Actions in Event Detail -->
+                <div id="detail-admin-actions" class="hidden flex items-center space-x-2">
+                    <button id="detail-btn-edit" class="px-3.5 py-1.5 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition">
+                        <i class="fas fa-pencil-alt mr-1"></i> Edit Event
+                    </button>
+                    <button id="detail-btn-delete" class="px-3.5 py-1.5 text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 transition">
+                        <i class="fas fa-trash-alt mr-1"></i> Delete
+                    </button>
+                </div>
+            </div>
+
+            <div id="event-detail-loading" class="text-center py-16 animate-pulse">
+                <div class="h-64 bg-slate-200 rounded-3xl mb-6"></div>
+                <div class="h-8 bg-slate-200 rounded w-1/2 mx-auto mb-4"></div>
+                <div class="h-4 bg-slate-100 rounded w-1/3 mx-auto"></div>
+            </div>
+
+            <div id="event-detail-content" class="hidden space-y-8">
+                <!-- Hero Banner Image -->
+                <div class="relative h-72 sm:h-96 rounded-3xl overflow-hidden bg-slate-900 shadow-md">
+                    <img id="detail-event-banner" src="" alt="Event Banner" class="w-full h-full object-cover">
+                    <div id="detail-event-banner-placeholder" class="hidden w-full h-full bg-gradient-to-r from-indigo-800 to-slate-900 flex items-center justify-center p-6 text-center text-white">
+                        <i class="fas fa-calendar-star text-5xl opacity-40"></i>
+                    </div>
+                </div>
+
+                <!-- Event Details Header -->
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div class="space-y-3 flex-1">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+                                Civic Event
+                            </span>
+                        </div>
+                        <h1 id="detail-event-title" class="text-2xl sm:text-3xl font-extrabold text-slate-900"></h1>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-sm text-slate-600">
+                            <div class="flex items-center">
+                                <i class="fas fa-calendar-check text-indigo-600 w-5"></i>
+                                <span class="font-medium mr-1">Starts:</span>
+                                <span id="detail-event-starts"></span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-calendar-times text-slate-400 w-5"></i>
+                                <span class="font-medium mr-1">Ends:</span>
+                                <span id="detail-event-ends"></span>
+                            </div>
+                            <div class="flex items-center sm:col-span-2">
+                                <i class="fas fa-map-marker-alt text-rose-500 w-5"></i>
+                                <span class="font-medium mr-1">Location:</span>
+                                <span id="detail-event-location"></span>
+                                <a id="detail-map-link" href="#" target="_blank" rel="noopener noreferrer" class="ml-2 text-xs font-semibold text-indigo-600 hover:underline">
+                                    (View on Google Maps <i class="fas fa-external-link-alt text-[10px]"></i>)
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Registration Action Card -->
+                    <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200/70 text-center sm:min-w-[240px] flex flex-col justify-center">
+                        <p class="text-xs text-slate-500 mb-3">Reserve your community seat</p>
+                        <button id="detail-register-btn" class="w-full py-3 px-5 text-sm font-bold rounded-xl shadow-md transition">
+                            Register for Event
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Event Description -->
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-4">
+                    <h3 class="text-lg font-bold text-slate-900 flex items-center">
+                        <i class="fas fa-align-left text-indigo-600 mr-2"></i> About This Civic Gathering
+                    </h3>
+                    <p id="detail-event-desc" class="text-slate-600 leading-relaxed text-sm sm:text-base whitespace-pre-line"></p>
+                </div>
+
+                <!-- ROLE GUARD: Attendees List (Visible ONLY to Admin) -->
+                <div id="event-attendees-section" class="hidden bg-white rounded-3xl p-6 sm:p-8 border border-purple-200 shadow-xs space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-bold text-slate-900 flex items-center">
+                            <i class="fas fa-users text-purple-600 mr-2"></i> Registered Attendees
+                            <span class="ml-2 text-xs uppercase px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-700 font-bold">Admin Only</span>
+                        </h3>
+                        <span id="attendees-count-badge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-purple-50 text-purple-700">0</span>
+                    </div>
+                    <div id="event-attendees-list">
+                        <!-- Attendees populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Community Feedback & Ratings Section -->
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+                        <div>
+                            <h3 class="text-lg font-bold text-slate-900 flex items-center">
+                                <i class="fas fa-star text-amber-400 mr-2"></i> Community Feedback & Ratings
+                            </h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Verified attendee reviews and comments</p>
+                        </div>
+                        <div class="flex items-center space-x-3 bg-amber-50 px-4 py-2 rounded-2xl border border-amber-100">
+                            <span id="feedback-avg-score" class="text-2xl font-black text-amber-600">--</span>
+                            <div class="flex flex-col">
+                                <div id="feedback-star-display" class="flex text-amber-400 text-xs"></div>
+                                <span id="feedback-total-count" class="text-[11px] text-slate-500 font-medium">0 reviews</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Leave / Edit Feedback Form (Logged in users) -->
+                    <div id="feedback-form-card" class="hidden bg-slate-50/80 rounded-2xl p-5 border border-slate-200 space-y-4">
+                        <h4 id="feedback-form-title" class="font-bold text-sm text-slate-800">Leave Your Review</h4>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Your Rating</label>
+                            <div id="feedback-stars-input" class="flex items-center space-x-2 text-xl cursor-pointer text-amber-400">
+                                <i class="fas fa-star" data-rating="1"></i>
+                                <i class="fas fa-star" data-rating="2"></i>
+                                <i class="fas fa-star" data-rating="3"></i>
+                                <i class="fas fa-star" data-rating="4"></i>
+                                <i class="fas fa-star" data-rating="5"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <label for="feedback-comment" class="block text-xs font-semibold text-slate-600 mb-1">Comment</label>
+                            <textarea id="feedback-comment" rows="3" placeholder="Share your insights on speakers, key takeaways, or venue..." class="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                        </div>
+                        <button id="feedback-submit-btn" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs transition">
+                            Submit Review
+                        </button>
+                    </div>
+
+                    <!-- Feedback List -->
+                    <div id="feedback-list-container">
+                        <!-- Rendered dynamically -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. VIEW: ANNOUNCEMENTS -->
+        <section id="view-announcements" class="app-view hidden space-y-6">
+            <div class="bg-gradient-to-r from-emerald-800 to-teal-900 rounded-3xl p-8 sm:p-10 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/30 text-emerald-200 backdrop-blur-sm mb-3">
+                        <i class="fas fa-broadcast-tower mr-1.5"></i> Civic Audio Broadcasts
+                    </span>
+                    <h1 class="text-3xl font-extrabold tracking-tight">Public Audio Announcements</h1>
+                    <p class="mt-2 text-emerald-100 text-sm max-w-xl">
+                        Listen to official municipal notices, emergency alerts, and volunteer community briefings with accessible audio playback.
+                    </p>
+                </div>
+
+                <!-- ROLE GUARD: Admin Only Announcement Creator -->
+                <button onclick="AnnouncementsModule.openCreateModal()" class="admin-only hidden px-4 py-2.5 bg-white text-emerald-900 hover:bg-emerald-50 font-bold text-sm rounded-xl shadow-md transition self-start md:self-auto flex items-center">
+                    <i class="fas fa-plus-circle mr-2 text-emerald-600"></i> New Announcement
+                </button>
+            </div>
+
+            <div id="announcements-list">
+                <!-- Announcements rendered dynamically -->
+            </div>
+        </section>
+
+        <!-- 4. VIEW: PROMOS -->
+        <section id="view-promos" class="app-view hidden space-y-6">
+            <div class="bg-gradient-to-r from-purple-900 via-indigo-900 to-slate-900 rounded-3xl p-8 sm:p-10 text-white shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/30 text-purple-200 backdrop-blur-sm mb-3">
+                        <i class="fas fa-video mr-1.5"></i> Video Spotlights & Closed Captions
+                    </span>
+                    <h1 class="text-3xl font-extrabold tracking-tight">Civic Video Promos</h1>
+                    <p class="mt-2 text-purple-100 text-sm max-w-xl">
+                        Watch civic initiative promos with synchronized subtitles, full transcripts, and accessible HTML5 media controls.
+                    </p>
+                </div>
+
+                <!-- ROLE GUARD: Admin Only Promo Creator -->
+                <button onclick="PromosModule.openCreateModal()" class="admin-only hidden px-4 py-2.5 bg-white text-purple-900 hover:bg-purple-50 font-bold text-sm rounded-xl shadow-md transition self-start md:self-auto flex items-center">
+                    <i class="fas fa-plus-circle mr-2 text-purple-600"></i> New Promo Video
+                </button>
+            </div>
+
+            <div id="promos-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Promo cards rendered dynamically -->
+            </div>
+        </section>
+
+        <!-- 5. VIEW: DASHBOARD (ADMIN & NORMAL USER) -->
+        <section id="view-dashboard" class="app-view hidden space-y-6">
+            <!-- 5A. ADMIN DASHBOARD VIEW -->
+            <div id="admin-dashboard-view" class="space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs">
+                    <div>
+                        <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-purple-100 text-purple-700">
+                            Administrator Console
+                        </span>
+                        <h1 class="text-2xl sm:text-3xl font-black text-slate-900 mt-2">Civic Platform Analytics</h1>
+                        <p class="text-xs text-slate-500 mt-1">Real-time statistics from PostgreSQL backend</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <a href="#/admin/users" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl transition shadow-xs">
+                            <i class="fas fa-users-cog mr-1.5"></i> Manage Users
+                        </a>
+                        <button onclick="EventsModule.openCreateModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition shadow-xs">
+                            <i class="fas fa-plus mr-1.5"></i> Add Event
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stat Cards Grid -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
+                        <p class="text-xs font-semibold text-slate-400 uppercase">Total Events</p>
+                        <p id="stat-total-events" class="text-2xl font-black text-slate-900 mt-1">--</p>
+                        <div class="mt-2 text-[11px] text-slate-500 flex space-x-2">
+                            <span>Upcoming: <strong id="stat-upcoming-events" class="text-indigo-600 font-bold">0</strong></span>
+                            <span>•</span>
+                            <span>Past: <strong id="stat-past-events" class="text-slate-600 font-bold">0</strong></span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
+                        <p class="text-xs font-semibold text-slate-400 uppercase">Registered Citizens</p>
+                        <p id="stat-total-users" class="text-2xl font-black text-slate-900 mt-1">--</p>
+                        <div class="mt-2 text-[11px] text-slate-500 flex space-x-2">
+                            <span>Active: <strong id="stat-active-users" class="text-emerald-600 font-bold">0</strong></span>
+                            <span>•</span>
+                            <span>Disabled: <strong id="stat-inactive-users" class="text-rose-600 font-bold">0</strong></span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
+                        <p class="text-xs font-semibold text-slate-400 uppercase">Total Registrations</p>
+                        <p id="stat-total-registrations" class="text-2xl font-black text-indigo-600 mt-1">--</p>
+                        <p class="text-[11px] text-slate-400 mt-2">Event attendee bookings</p>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs">
+                        <p class="text-xs font-semibold text-slate-400 uppercase">Feedback Entries</p>
+                        <p id="stat-total-feedbacks" class="text-2xl font-black text-amber-500 mt-1">--</p>
+                        <p class="text-[11px] text-slate-400 mt-2">Citizen reviews submitted</p>
+                    </div>
+                </div>
+
+                <!-- Secondary Stats Grid -->
+                <div class="grid grid-cols-3 gap-4">
+                    <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs text-center">
+                        <i class="fas fa-video text-purple-600 text-lg mb-1"></i>
+                        <p class="text-xs text-slate-400">Total Promos</p>
+                        <p id="stat-total-promos" class="text-xl font-bold text-slate-900">--</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs text-center">
+                        <i class="fas fa-bullhorn text-emerald-600 text-lg mb-1"></i>
+                        <p class="text-xs text-slate-400">Announcements</p>
+                        <p id="stat-total-announcements" class="text-xl font-bold text-slate-900">--</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs text-center">
+                        <i class="fas fa-bell text-blue-600 text-lg mb-1"></i>
+                        <p class="text-xs text-slate-400">Notifications</p>
+                        <p id="stat-total-notifications" class="text-xl font-bold text-slate-900">--</p>
+                    </div>
+                </div>
+
+                <!-- Growth Graph Chart Card -->
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-base font-bold text-slate-900">Citizen Registration Growth</h3>
+                            <p class="text-xs text-slate-400">New user signups over the past 6 months</p>
+                        </div>
+                        <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">Monthly Trends</span>
+                    </div>
+                    <div class="h-64 w-full">
+                        <canvas id="user-growth-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5B. USER DASHBOARD VIEW -->
+            <div id="user-dashboard-view" class="hidden space-y-6">
+                <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs">
+                    <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-blue-100 text-blue-700">Citizen Portal</span>
+                    <h1 class="text-2xl sm:text-3xl font-black text-slate-900 mt-2">Welcome to Your Civic Dashboard</h1>
+                    <p class="text-sm text-slate-500 mt-1">Track your event bookings, community feedback, and official municipal announcements.</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl flex-shrink-0">
+                            <i class="fas fa-ticket-alt"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold uppercase text-slate-400">Events Registered</p>
+                            <p id="user-stat-registrations" class="text-3xl font-black text-slate-900 mt-1">0</p>
+                            <a href="#/registrations" class="text-xs text-indigo-600 font-semibold hover:underline mt-1 inline-block">View My Events &rarr;</a>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center text-xl flex-shrink-0">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold uppercase text-slate-400">Reviews Submitted</p>
+                            <p id="user-stat-feedbacks" class="text-3xl font-black text-slate-900 mt-1">0</p>
+                            <a href="#/feedback" class="text-xs text-amber-600 font-semibold hover:underline mt-1 inline-block">View Feedback &rarr;</a>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center text-xl flex-shrink-0">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold uppercase text-slate-400">Unread Alerts</p>
+                            <p id="user-stat-notifications" class="text-3xl font-black text-slate-900 mt-1">0</p>
+                            <button onclick="NotificationsModule.openDrawer()" class="text-xs text-rose-600 font-semibold hover:underline mt-1 inline-block">Open Drawer &rarr;</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Action Cards for Normal Users -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-gradient-to-br from-indigo-50 to-white rounded-3xl p-6 border border-indigo-100 flex flex-col justify-between">
+                        <div>
+                            <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center text-lg mb-3">
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-900">Explore Civic Events</h3>
+                            <p class="text-sm text-slate-600 mt-2">Discover upcoming public meetings, forums, and community events across the city.</p>
+                        </div>
+                        <a href="#/events" class="mt-5 inline-flex items-center text-sm font-bold text-indigo-600 hover:text-indigo-800">Browse Event Directory &rarr;</a>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-emerald-50 to-white rounded-3xl p-6 border border-emerald-100 flex flex-col justify-between">
+                        <div>
+                            <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg mb-3">
+                                <i class="fas fa-bullhorn"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-900">Audio Announcements</h3>
+                            <p class="text-sm text-slate-600 mt-2">Listen to official municipal notices, emergency updates, and community alerts.</p>
+                        </div>
+                        <a href="#/announcements" class="mt-5 inline-flex items-center text-sm font-bold text-emerald-600 hover:text-emerald-800">Listen to Broadcasts &rarr;</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. VIEW: ADMIN USER MANAGEMENT (ADMIN ONLY) -->
+        <section id="view-admin-users" class="app-view hidden space-y-6">
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-purple-100 text-purple-700">Administrator Only</span>
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-black text-slate-900 mt-2">User Management</h1>
+                    <p class="text-xs text-slate-500 mt-1">Review citizen accounts and manage access permissions (Enable/Disable status)</p>
+                </div>
+                <div class="text-right">
+                    <span id="admin-users-count" class="px-3 py-1.5 rounded-xl bg-slate-100 text-xs font-bold text-slate-600">0 Users</span>
+                </div>
+            </div>
+
+            <!-- Users Table -->
+            <div class="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                <th class="px-6 py-4">Citizen</th>
+                                <th class="px-6 py-4">Role</th>
+                                <th class="px-6 py-4">Status</th>
+                                <th class="px-6 py-4">Registered Date</th>
+                                <th class="px-6 py-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-users-table-body" class="divide-y divide-slate-100 text-sm">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 7. VIEW: MY PROFILE -->
+        <section id="view-profile" class="app-view hidden space-y-6 max-w-2xl mx-auto">
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs space-y-6">
+                <div class="flex items-center space-x-4 border-b border-slate-100 pb-6">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-indigo-600 to-indigo-800 text-white font-black text-2xl flex items-center justify-center shadow-md shadow-indigo-200">
+                        <span class="user-name-display">U</span>
+                    </div>
+                    <div>
+                        <h1 id="profile-name-header" class="text-xl font-bold text-slate-900">User Profile</h1>
+                        <p id="profile-email-header" class="text-xs text-slate-500">user@example.com</p>
+                        <div class="flex items-center space-x-2 mt-2">
+                            <span id="profile-role-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase bg-blue-100 text-blue-700">USER</span>
+                            <span id="profile-status-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">Active</span>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="profile-form" class="space-y-4">
+                    <div>
+                        <label for="profile-input-name" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Full Name</label>
+                        <input id="profile-input-name" type="text" required class="w-full px-4 py-2.5 bg-slate-50 focus:bg-white rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                    </div>
+
+                    <div>
+                        <label for="profile-input-email" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Email Address</label>
+                        <input id="profile-input-email" type="email" required class="w-full px-4 py-2.5 bg-slate-50 focus:bg-white rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 pt-2">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">System Role (Immutable)</label>
+                            <input id="profile-input-role" type="text" readonly disabled class="w-full px-4 py-2.5 bg-slate-100 rounded-xl border border-slate-200 text-sm text-slate-500 cursor-not-allowed">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Account Status (Immutable)</label>
+                            <input id="profile-input-status" type="text" readonly disabled class="w-full px-4 py-2.5 bg-slate-100 rounded-xl border border-slate-200 text-sm text-slate-500 cursor-not-allowed">
+                        </div>
+                    </div>
+
+                    <div class="pt-4">
+                        <button id="profile-save-btn" type="submit" class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-md transition">
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- 8. VIEW: MY REGISTRATIONS -->
+        <section id="view-my-registrations" class="app-view hidden space-y-6">
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs">
+                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-100 text-indigo-700">Citizen Bookings</span>
+                <h1 class="text-2xl sm:text-3xl font-black text-slate-900 mt-2">My Event Registrations</h1>
+                <p class="text-xs text-slate-500 mt-1">Manage all upcoming events and cancel registrations if your schedule changes</p>
+            </div>
+
+            <div id="my-registrations-container"></div>
+        </section>
+
+        <!-- 9. VIEW: MY FEEDBACK -->
+        <section id="view-my-feedback" class="app-view hidden space-y-6">
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200/80 shadow-xs">
+                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-700">Citizen Reviews</span>
+                <h1 class="text-2xl sm:text-3xl font-black text-slate-900 mt-2">My Submitted Feedback</h1>
+                <p class="text-xs text-slate-500 mt-1">Review ratings and comments you contributed to past civic sessions</p>
+            </div>
+
+            <div id="my-feedback-container"></div>
+        </section>
+
+        <!-- 10. VIEW: LOGIN -->
+        <section id="view-login" class="app-view hidden py-8 max-w-md mx-auto">
+            <div class="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-xl space-y-6">
+                <div class="text-center">
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center mx-auto text-xl shadow-md shadow-indigo-200 mb-3">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <h2 class="text-2xl font-black text-slate-900">Sign in to CivicEvents+</h2>
+                    <p class="text-xs text-slate-500 mt-1">Access civic services, event bookings, and alerts</p>
+                </div>
+
+                <!-- Quick One-Click Demo Logins -->
+                <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 space-y-2">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500 text-center">Fast-Track Demo Sign-In</p>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="quick-admin-login" type="button" class="py-2 px-3 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl text-xs font-bold transition flex items-center justify-center">
+                            <i class="fas fa-user-shield mr-1.5"></i> Admin Demo
+                        </button>
+                        <button id="quick-user-login" type="button" class="py-2 px-3 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold transition flex items-center justify-center">
+                            <i class="fas fa-user mr-1.5"></i> Citizen Demo
+                        </button>
+                    </div>
+                </div>
+
+                <form id="login-form" class="space-y-4">
+                    <div>
+                        <label for="login-email" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Email</label>
+                        <input id="login-email" type="email" required placeholder="name@example.com" class="w-full px-4 py-2.5 bg-slate-50 focus:bg-white rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                    </div>
+
+                    <div>
+                        <label for="login-password" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Password</label>
+                        <input id="login-password" type="password" required placeholder="••••••••" class="w-full px-4 py-2.5 bg-slate-50 focus:bg-white rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                    </div>
+
+                    <div class="flex items-center justify-between text-xs">
+                        <label class="flex items-center cursor-pointer text-slate-600">
+                            <input id="login-remember-me" type="checkbox" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-slate-300">
+                            <span class="ml-2 font-medium">Keep me signed in</span>
+                        </label>
+                        <span class="text-[11px] text-slate-400" title="Unchecked = sessionStorage (cleared on close). Checked = localStorage (persistent across sessions).">
+                            <i class="fas fa-shield-alt mr-1"></i> Storage Rules
+                        </span>
+                    </div>
+
+                    <button id="login-submit-btn" type="submit" class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-md shadow-indigo-200 transition">
+                        Sign In to Account
+                    </button>
+                </form>
+
+                <div class="text-center pt-2 border-t border-slate-100">
+                    <p class="text-xs text-slate-500">
+                        Don't have an account yet? 
+                        <a href="#/signup" class="font-bold text-indigo-600 hover:underline">Create Account</a>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 11. VIEW: SIGNUP -->
+        <section id="view-signup" class="app-view hidden py-8 max-w-md mx-auto">
+            <div class="bg-white rounded-3xl p-8 border border-slate-200/80 shadow-xl space-y-6">
+                <div class="text-center">
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center mx-auto text-xl shadow-md shadow-indigo-200 mb-3">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <h2 class="text-2xl font-black text-slate-900">Create Citizen Account</h2>
+                    <p class="text-xs text-slate-500 mt-1">Join the civic participation platform</p>
+                </div>
+
+                <form id="signup-form" class="space-y-4">
+                    <div>
+                        <label for="signup-name" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Full Name</label>
+                        <input id="signup-name" type="text" required placeholder="John Doe" class="w-full px-4 py-2.5 bg-slate-50 focus:bg-white rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                    </div>
+
+                    <div>
+                        <label for="signup-email" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Email Address</label>
+                        <input id="signup-email" type="email" required placeholder="name@example.com" class="w-full px-4 py-2.5 bg-slate-50 focus:bg-white rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                    </div>
+
+                    <div>
+                        <label for="signup-role" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Account Role</label>
+                        <select id="signup-role" class="w-full px-4 py-2.5 bg-slate-50 focus:bg-white rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                            <option value="user" selected>Normal Citizen (Default)</option>
+                            <option value="admin">Platform Administrator</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="signup-password" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Password</label>
+                        <input id="signup-password" type="password" required placeholder="••••••••" class="w-full px-4 py-2.5 bg-slate-50 focus:bg-white rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                        
+                        <!-- PASSWORD STRENGTH METER -->
+                        <div class="mt-2">
+                            <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                                <div id="password-strength-bar" class="bg-gray-200 h-1.5 transition-all duration-300 w-0"></div>
+                            </div>
+                            <p id="password-strength-text" class="text-[11px] text-slate-400 mt-1 font-medium">Min 8 chars, uppercase, lowercase, number & symbol</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="signup-confirm-password" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Confirm Password</label>
+                        <input id="signup-confirm-password" type="password" required placeholder="••••••••" class="w-full px-4 py-2.5 bg-slate-50 focus:bg-white rounded-xl border border-slate-200 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition">
+                    </div>
+
+                    <button id="signup-submit-btn" type="submit" class="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm rounded-xl shadow-md shadow-indigo-200 transition">
+                        Create Citizen Account
+                    </button>
+                </form>
+
+                <div class="text-center pt-2 border-t border-slate-100">
+                    <p class="text-xs text-slate-500">
+                        Already have an account? 
+                        <a href="#/login" class="font-bold text-indigo-600 hover:underline">Sign In</a>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- ========================================================================= -->
+    <!-- GLOBAL FOOTER                                                             -->
+    <!-- ========================================================================= -->
+    <footer class="mt-auto border-t border-slate-200 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-3 text-slate-600 text-sm">
+                <i class="fas fa-landmark text-indigo-600"></i>
+                <span class="font-semibold text-slate-800">CivicEvents+</span>
+                <span>• Civic Engagement & Open Municipal Services</span>
+            </div>
+            <div class="flex items-center space-x-4 text-xs text-slate-400">
+                <span class="flex items-center">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
+                    API: Connected (<span id="footer-api-host">http://localhost:4000</span>)
+                </span>
+                <span>•</span>
+                <a href="#/events" class="hover:text-indigo-600 transition">Events</a>
+                <a href="#/announcements" class="hover:text-indigo-600 transition">Announcements</a>
+                <a href="#/promos" class="hover:text-indigo-600 transition">Promos</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ========================================================================= -->
+    <!-- MODALS                                                                    -->
+    <!-- ========================================================================= -->
+
+    <!-- 1. CONFIRMATION MODAL -->
+    <div id="confirmation-modal" class="hidden fixed inset-0 z-50 modal-backdrop items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 sm:p-7 max-w-sm w-full shadow-2xl space-y-4 border border-slate-100">
+            <h3 id="confirm-modal-title" class="text-lg font-bold text-slate-900">Confirm Action</h3>
+            <p id="confirm-modal-message" class="text-sm text-slate-600 leading-relaxed"></p>
+            <div class="flex items-center justify-end space-x-3 pt-2">
+                <button id="confirm-modal-cancel" type="button" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition">
+                    Cancel
+                </button>
+                <button id="confirm-modal-submit" type="button" class="px-4 py-2 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs transition">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. ADMIN EVENT MODAL (Create / Edit Event) -->
+    <div id="event-modal" class="hidden fixed inset-0 z-50 modal-backdrop items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl space-y-5 my-8 border border-slate-100">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                <h3 id="event-modal-title" class="text-lg font-bold text-slate-900">Create Civic Event</h3>
+                <button onclick="EventsModule.closeEventModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-lg">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form id="event-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Event Title *</label>
+                    <input id="event-form-title" type="text" required placeholder="e.g. Annual Civic Innovation Forum" class="w-full px-3.5 py-2.5 bg-slate-50 focus:bg-white rounded-xl border border-slate-200 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Location *</label>
+                    <input id="event-form-location" type="text" required placeholder="e.g. City Hall Auditorium" class="w-full px-3.5 py-2.5 bg-slate-50 focus:bg-white rounded-xl border border-slate-200 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Starts At *</label>
+                        <input id="event-form-starts" type="datetime-local" required class="w-full px-3.5 py-2.5 bg-slate-50 focus:bg-white rounded-xl border border-slate-200 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Ends At *</label>
+                        <input id="event-form-ends" type="datetime-local" required class="w-full px-3.5 py-2.5 bg-slate-50 focus:bg-white rounded-xl border border-slate-200 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Description</label>
+                    <textarea id="event-form-description" rows="3" placeholder="Provide event context, speakers, agenda..." class="w-full px-3.5 py-2.5 bg-slate-50 focus:bg-white rounded-xl border border-slate-200 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Event Banner Image (Max 2MB)</label>
+                    <input id="event-form-image" type="file" accept=".jpg,.jpeg,.png,.gif" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                    <div id="event-image-preview-container" class="hidden mt-3">
+                        <img id="event-image-preview" src="" alt="Preview" class="h-32 w-full object-cover rounded-xl border border-slate-200">
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="EventsModule.closeEventModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Cancel</button>
+                    <button id="event-form-submit" type="submit" class="px-5 py-2.5 text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-xs">Save Event</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. ADMIN ANNOUNCEMENT MODAL -->
+    <div id="announcement-modal" class="hidden fixed inset-0 z-50 modal-backdrop items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-5 border border-slate-100">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                <h3 class="text-lg font-bold text-slate-900">New Audio Announcement</h3>
+                <button onclick="AnnouncementsModule.closeCreateModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-lg">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form id="announcement-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Title *</label>
+                    <input id="announcement-form-title" type="text" required placeholder="e.g. City Council Public Notice" class="w-full px-3.5 py-2.5 bg-slate-50 focus:bg-white rounded-xl border border-slate-200 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Audio File (MP3, WAV, M4A, OGG up to 5MB) *</label>
+                    <input id="announcement-form-audio" type="file" required accept=".mp3,.wav,.m4a,.ogg" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                </div>
+
+                <div class="flex items-center">
+                    <input id="announcement-form-published" type="checkbox" checked class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300">
+                    <label for="announcement-form-published" class="ml-2 text-xs font-semibold text-slate-700">Publish immediately for all citizens</label>
+                </div>
+
+                <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="AnnouncementsModule.closeCreateModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Cancel</button>
+                    <button id="announcement-form-submit" type="submit" class="px-5 py-2.5 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-xs">Create Announcement</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4. ADMIN PROMO MODAL -->
+    <div id="promo-modal" class="hidden fixed inset-0 z-50 modal-backdrop items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-5 my-8 border border-slate-100">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                <h3 class="text-lg font-bold text-slate-900">New Promo Video & Captions</h3>
+                <button onclick="PromosModule.closeCreateModal()" class="p-2 text-slate-400 hover:text-slate-600 rounded-lg">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <form id="promo-form" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Promo Title *</label>
+                    <input id="promo-form-title" type="text" required placeholder="e.g. Green Neighborhood Initiative" class="w-full px-3.5 py-2.5 bg-slate-50 focus:bg-white rounded-xl border border-slate-200 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Description *</label>
+                    <textarea id="promo-form-description" rows="2" required placeholder="Short summary of this civic promo..." class="w-full px-3.5 py-2.5 bg-slate-50 focus:bg-white rounded-xl border border-slate-200 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Closed Captions & Transcript Text *</label>
+                    <textarea id="promo-form-caption" rows="3" required placeholder="Enter full spoken text for accessibility and synchronized video subtitles..." class="w-full px-3.5 py-2.5 bg-slate-50 focus:bg-white rounded-xl border border-slate-200 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Video File (MP4, MOV, AVI, MKV up to 8MB) *</label>
+                    <input id="promo-form-video" type="file" required accept=".mp4,.mov,.avi,.mkv" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100">
+                </div>
+
+                <div class="flex items-center justify-end space-x-3 pt-3 border-t border-slate-100">
+                    <button type="button" onclick="PromosModule.closeCreateModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Cancel</button>
+                    <button id="promo-form-submit" type="submit" class="px-5 py-2.5 text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-xl shadow-xs">Create Promo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 5. ADMIN USER DETAIL MODAL -->
+    <div id="user-detail-modal" class="hidden fixed inset-0 z-50 modal-backdrop items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 sm:p-7 max-w-sm w-full shadow-2xl space-y-4 border border-slate-100">
+            <h3 class="text-base font-bold text-slate-900">User Account Details</h3>
+            <div class="space-y-2.5 text-xs text-slate-600 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+                <p><strong class="text-slate-800">Name:</strong> <span id="user-detail-name"></span></p>
+                <p><strong class="text-slate-800">Email:</strong> <span id="user-detail-email"></span></p>
+                <p><strong class="text-slate-800">User ID:</strong> <span id="user-detail-id" class="font-mono text-[10px] break-all"></span></p>
+                <p><strong class="text-slate-800">Role:</strong> <span id="user-detail-role" class="font-bold"></span></p>
+                <p><strong class="text-slate-800">Status:</strong> <span id="user-detail-status"></span></p>
+                <p><strong class="text-slate-800">Joined:</strong> <span id="user-detail-created"></span></p>
+            </div>
+            <div class="text-right">
+                <button type="button" onclick="UsersModule.closeUserDetailModal()" class="px-4 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. SETTINGS MODAL (Backend URL Config) -->
+    <div id="settings-modal" class="hidden fixed inset-0 z-50 modal-backdrop items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full shadow-2xl space-y-4 border border-slate-100">
+            <h3 class="text-base font-bold text-slate-900">Backend API URL Configuration</h3>
+            <p class="text-xs text-slate-500">Configure the backend API server host if running on a custom port or remote server.</p>
+            <form id="settings-form" class="space-y-4">
+                <div>
+                    <label for="settings-api-url" class="block text-xs font-bold text-slate-700 uppercase mb-1">API Server Base URL</label>
+                    <input id="settings-api-url" type="url" required class="w-full px-3.5 py-2.5 bg-slate-50 focus:bg-white rounded-xl border border-slate-200 text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                </div>
+                <div class="flex items-center justify-end space-x-2 pt-2">
+                    <button id="settings-modal-cancel" type="button" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Cancel</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl">Save & Reload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- SCRIPT INCLUSIONS (jQuery, Config, Core Services, Features)               -->
+    <!-- ========================================================================= -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="js/config.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/router.js"></script>
+    <script src="js/events.js"></script>
+    <script src="js/announcements.js"></script>
+    <script src="js/promos.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/users.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+</html>
